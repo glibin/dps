@@ -12,7 +12,8 @@
 -export([add_channels/2,
         find_or_create/2,
         limit/0,
-         fetch/2]).
+        fetch/2,
+        channels/1]).
 
 -record(state, {
     session,
@@ -41,6 +42,8 @@ find_or_create(SessionId, Channels) ->
             dps_session:add_channels(Session_, Channels),
             Session_;
         Session_ ->
+            [dps:new(Channel) || Channel <- Channels],
+            dps_session:add_channels(Session_, Channels),
             Session_
     end,
     Session.
@@ -56,6 +59,8 @@ fetch(Session, OldSeq) when is_pid(Session) ->
         exit:{timeout,_} -> {ok, OldSeq, []}
     end.
 
+channels(Session) when is_pid(Session) ->
+    gen_server:call(Session, channels).
 
 start_link(Session) ->
     gen_server:start_link(?MODULE, Session, []).
@@ -89,8 +94,12 @@ handle_call({fetch, NewSeq}, From, State = #state{timer = OldTimer, seq = Seq, w
 handle_call({add_channels, Channels}, _From, State = #state{
                                                     channels = OldChannels}) ->
     [dps:subscribe(Channel) || Channel <- Channels -- OldChannels],
-    NewChannels = sets:to_list(sets:from_list(Channels ++ OldChannels)),
+    [dps:unsubscribe(Channel) || Channel <- OldChannels -- Channels],
+    NewChannels = Channels,%%sets:to_list(sets:from_list(Channels ++ OldChannels)),
     {reply, NewChannels, State#state{channels = NewChannels}};
+
+handle_call(channels, _From, State = #state{channels=Channels}) ->
+    {reply, Channels, State};
 
 handle_call(Msg, _From, State) ->
     {reply, {error, {unknown_call, Msg}}, State}.

@@ -3,6 +3,7 @@
 -export([new/0,
          new/1,
          publish/2,
+         unsubscribe/1,
          subscribe/1,
          subscribe/2,
          multi_fetch/2,
@@ -50,6 +51,9 @@ subscribe(Tag) ->
 -spec subscribe(Tag :: tag(), TS :: timestamp()) -> TotalMsgs :: non_neg_integer().
 subscribe(Tag, TS) ->
     dps_channel:subscribe(Tag, TS).
+
+unsubscribe(Tag) ->
+    dps_channel:unsubscribe(Tag).
 
 -spec multi_fetch([Tag :: tag()], TS :: timestamp()) -> 
     {ok, LastTS :: timestamp(), [Msg :: term()]}.
