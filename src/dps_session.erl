@@ -83,7 +83,7 @@ handle_call({fetch, OldSeq}, _From, State = #state{messages = Messages, timer = 
         erlang:cancel_timer(OldTimer),
         Timer = erlang:send_after(?TIMEOUT, self(), timeout),
         NewMessages = leave_new(Seq - OldSeq, Messages),
-        {reply, {ok, Seq, lists:reverse(NewMessages)}, State#state{messages = NewMessages, timer = Timer}};
+        {reply, {ok, Seq, lists:reverse(NewMessages)}, State#state{timer = Timer}};
 
 handle_call({fetch, NewSeq}, From, State = #state{timer = OldTimer, seq = Seq, waiters = Waiters}) 
     when NewSeq >= Seq ->
